@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copy Helper</title>
+    <style>
+      :root {
+        --back: #fff;
+        --text: #000;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --back: #2b2e33;
+          --text: #fff;
+        }
+      }
+      * {
+        font-family: monospace;
+        font-size: 12px;
+      }
+      body {
+        background: var(--back);
+        display: grid;
+        grid-template-columns: auto 1fr;
+      }
+      #hashes,
+      #input {
+        background: var(--back);
+        color: var(--text);
+        padding: 4px;
+        margin: 0;
+        border: 1px solid var(--text);
+      }
+      #hashes {
+        border-right: 0;
+      }
+      #hashes span {
+        display: block;
+        height: 16px;
+        padding-right: 2px;
+      }
+      #hashes span:nth-child(10n) {
+        font-weight: bold;
+      }
+      #hashes span:nth-child(100n) {
+        background: var(--text);
+        color: var(--back);
+      }
+      #input {
+        line-height: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hashes"></div>
+    <textarea id="input"></textarea>
+    <script>
+      const $input = document.querySelector("textarea");
+      addEventListener("load", () => {
+        $input.value = document.documentElement.outerHTML;
+        updateHashes();
+      });
+      const $hashes = document.querySelector("#hashes");
+      $input.addEventListener("input", updateHashes);
+
+      async function hash(text) {
+        const msg = new TextEncoder().encode(text);
+        const hash = await window.crypto.subtle.digest("SHA-1", msg);
+        return Array.from(new Uint8Array(hash), (b) =>
+          b.toString(16).padStart(2, "0")
+        )
+          .join("")
+          .slice(0, 6);
+      }
+
+      async function updateHashes() {
+        const lines = $input.value.split("\n").map((line) => line.trim());
+        const hashers = [];
+        for (let i = 1; i <= lines.length; ++i) {
+          hashers.push(hash(lines.slice(0, i).join("\n")));
+        }
+        const hashes = await Promise.all(hashers);
+        $hashes.innerHTML = hashes
+          .map((h, i) => `<span>${i + 1}\t${h}</span>`)
+          .join("\n");
+      }
+    </script>
+  </body>
+</html>
