@@ -7,11 +7,13 @@
     <style>
       :root {
         --back: #fff;
+        --hl: #ddd;
         --text: #000;
       }
       @media (prefers-color-scheme: dark) {
         :root {
           --back: #2b2e33;
+          --hl: #555;
           --text: #fff;
         }
       }
@@ -35,15 +37,21 @@
       #hashes {
         border-right: 0;
       }
+      #hashes {
+        display: grid;
+        column-gap: 1em;
+        grid-template-columns: repeat(2, auto);
+        text-align: right;
+        padding-right: 4px;
+      }
       #hashes span {
-        display: block;
         height: 16px;
-        padding-right: 2px;
       }
-      #hashes span:nth-child(10n) {
+      #hashes span:nth-child(20n - 1) {
         font-weight: bold;
+        background: var(--hl);
       }
-      #hashes span:nth-child(100n) {
+      #hashes span:nth-child(200n - 1) {
         background: var(--text);
         color: var(--back);
       }
@@ -56,13 +64,31 @@
     <div id="hashes"></div>
     <textarea id="input"></textarea>
     <script>
+      const showSpaces = (t) => t.replace(/[ \t]/g, (m) => replacements[m[0]]);
+      const hideSpaces = (t) =>
+        t.replace(/[\u2022\u2799]/g, (m) => replacements[m[0]]);
+      const replacements = {
+        " ": "\u2022",
+        "\u2022": " ",
+        "\t": "\u2799",
+        "\u2799": "\t",
+      };
+
       const $input = document.querySelector("textarea");
+      const $hashes = document.querySelector("#hashes");
       addEventListener("load", () => {
-        $input.value = document.documentElement.outerHTML;
+        $input.value = showSpaces(document.documentElement.outerHTML);
         updateHashes();
       });
-      const $hashes = document.querySelector("#hashes");
       $input.addEventListener("input", updateHashes);
+      $input.addEventListener("mousedown", () => {
+        $input.value = hideSpaces($input.value);
+        updateHashes();
+      });
+      $input.addEventListener("blur", () => {
+        $input.value = showSpaces($input.value);
+        updateHashes();
+      });
 
       async function hash(text) {
         const msg = new TextEncoder().encode(text);
@@ -82,7 +108,7 @@
         }
         const hashes = await Promise.all(hashers);
         $hashes.innerHTML = hashes
-          .map((h, i) => `<span>${i + 1}\t${h}</span>`)
+          .map((h, i) => `<span>${i + 1}</span><span>${h}</span>`)
           .join("\n");
       }
     </script>
